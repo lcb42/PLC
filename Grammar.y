@@ -19,3 +19,6 @@ import Tokens
 
 
  --what are presumably associations? For each operator add association direct (L/R)
+ --Except they're aren't any operators here.
+ --I think
+ --I'm too tired for this
