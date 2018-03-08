@@ -2,6 +2,8 @@
 type Order = Int
 type Where = [Int]
 
+-- TODO:Convert from AST strings to items which can be passed into the below functions
+
 -- Join two tables and apply 'wheres if there are any'
 conjoin :: [[String]] -> [[String]] -> [Where] -> [[String]]
 conjoin t1 t2 [] = [a ++ b | a <- t1, b <- t2]
