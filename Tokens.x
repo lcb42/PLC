@@ -19,7 +19,7 @@ tokens :-
   \!=         { \s -> TokenNotEq }
   \(          { \s -> TokenLParen }
   \)          { \s -> TokenRParen }
-  $digit+     { \s -> TokenInt (read s) }
+  $digit+     { \s -> TokenInt (read s) }   --do we need a int thing
   $alpha      { \s -> TokenVar s }
 
 {
@@ -29,16 +29,16 @@ tokens :-
 -- The token type:
 
 data Token =
-  TokenTake   |
-  TokenFrom   |
-  TokenIf     |
-  TokenImport |
-  TokenNull   |
-  TokenEq     |
-  TokenNotEq  |
-  TokenLParen |
-  TokenRParen |
-  TokenInt    |
-  TokenVar
+  TokenTake     |
+  TokenFrom     |
+  TokenIf       |
+  TokenImport   |
+  TokenNull     |
+  TokenEq       |
+  TokenNotEq    |
+  TokenLParen   |
+  TokenRParen   |
+  TokenInt Int  |
+  TokenVar String
   deriving (Eq, Show)
 }
