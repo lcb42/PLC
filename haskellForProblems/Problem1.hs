@@ -1,13 +1,18 @@
-joinTables :: [[String]] -> [[String]] -> [[String]]
-joinTables t1 t2 = [a ++ b | a <- t1, b <- t2]
 
 type Order = Int
 
-getOrder :: [Order] -> [[String]] -> [String]
-getOrder order list = [ l !! o | l <- list, o <- order]
+-- Join two tables
+conjoin :: [[String]] -> [[String]] -> [[String]]
+conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
---compileLists :: [Order] -> [[String]] -> [[String]]
-compileLists order [] = []
-compileLists order (x:xs) = [getOrder order x] ++ compileLists order xs
+-- Take one row, rearrange to desired order
+orderOne :: [Order] -> [String] -> [String]
+orderOne ord xs = [ xs !! o | o <- ord]
 
-orderList order xs = [ x !! o | x <- xs, o <- order]
+-- Pass all rows into orderAll to be ordered
+orderAll :: [Order] -> [[String]] -> [[String]]
+orderAll ord xs = [selectOne ord x | x <- xs ]
+
+-- Pass in a desired order and two lists of strings to be joined and ordered
+selectFrom :: [Order] -> [[String]] -> [[String]] -> [[String]]
+selectFrom ord xs ys = selectAll ord (conjoin xs ys)
