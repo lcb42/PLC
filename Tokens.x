@@ -19,6 +19,8 @@ tokens :-
   \!=         { \s -> TokenNotEq }
   \(          { \s -> TokenLParen }
   \)          { \s -> TokenRParen }
+  \[          { \s -> TokenLSP }
+  \]          { \s -> TokenRSP }
   $digit+     { \s -> TokenInt (read s) }   --do we need a int thing
   $alpha      { \s -> TokenVar s }
 
@@ -38,6 +40,8 @@ data Token =
   TokenNotEq    |
   TokenLParen   |
   TokenRParen   |
+  TokenLSP      |
+  TokenRSP      |
   TokenInt Int  |
   TokenVar String
   deriving (Eq, Show)
