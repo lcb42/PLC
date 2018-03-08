@@ -30,5 +30,5 @@ selectAll :: [Order] -> [[String]] -> [[String]]
 selectAll ord xs = [selectOne ord x | x <- xs ]
 
 -- Pass in a desired order and two lists of strings to be joined and ordered
---selectFrom :: [Order] -> [[String]] -> [[String]] -> [[String]]
---selectFrom ord xs ys = selectAll ord (conjoin xs ys)
+selectFrom :: [Order] -> [[String]] -> [[String]] -> [Where] -> [[String]]
+selectFrom ord xs ys wheres = selectAll ord (conjoin xs ys wheres)
