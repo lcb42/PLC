@@ -1,5 +1,5 @@
-{
-  module Tokens (tokens) where
+{ 
+module Tokens where 
 }
 
 %wrapper "basic"
@@ -10,39 +10,31 @@ $alpha = [a-zA-Z]           --alphabetic characters
 tokens :-
   $white+     ;
   "--".*      ;
-  TAKE        { \s -> TokenTake }
-  FROM        { \s -> TokenFrom }
-  IF          { \s -> TokenIf }
-  IMPORT      { \s -> TokenImport }
-  NULL        { \s -> TokenNull }
-  \==         { \s -> TokenEq }
-  \!=         { \s -> TokenNotEq }
-  \(          { \s -> TokenLParen }
-  \)          { \s -> TokenRParen }
-  \[          { \s -> TokenLSP }
-  \]          { \s -> TokenRSP }
-  $digit+     { \s -> TokenInt (read s) }   --do we need a int thing
-  $alpha      { \s -> TokenVar s }
+  TAKE                           { \s -> TokenTake }
+  FROM                           { \s -> TokenFrom }
+  READ                           { \s -> TokenRead }
+  WHERE                          { \s -> TokenWhere }
+  \,                             { \s -> TokenComma }
+  \^                             { \s -> TokenConjoin }
+  \=                             { \s -> TokenEq }
+  \(                             { \s -> TokenLParen }
+  \)                             { \s -> TokenRParen }
+  $alpha [$digit]*               { \s -> TokenVar s }
 
 {
-      --Each action has type :: String -> Token
-
-
+--Each action has type :: String -> Token
 -- The token type:
 
 data Token =
   TokenTake     |
   TokenFrom     |
-  TokenIf       |
-  TokenImport   |
-  TokenNull     |
+  TokenRead     |
+  TokenWhere    |
+  TokenComma    |
+  TokenConjoin  |
   TokenEq       |
-  TokenNotEq    |
   TokenLParen   |
   TokenRParen   |
-  TokenLSP      |
-  TokenRSP      |
-  TokenInt Int  |
   TokenVar String
   deriving (Eq, Show)
 }
