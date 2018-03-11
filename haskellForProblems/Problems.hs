@@ -1,6 +1,6 @@
 module Main where
 import Tokens
---import Grammar
+import Grammar
 import Data.List
 
 type Order = Int
@@ -70,7 +70,7 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
 main = do
  s <- readFile "text.txt" 
  let tokens = alexScanTokens s
- print tokens
-
+ let result = parseCql tokens
+ print result
 
 
