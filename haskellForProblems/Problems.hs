@@ -5,7 +5,7 @@ import Data.List
 
 type Order = Int
 --type Where = [Int]
-type Where = (Int, Int)
+type WherePair = (Int, Int)
 
 -- TODO:Convert from AST strings to items which can be passed into the below functions
 
@@ -14,10 +14,10 @@ conjoin :: [[String]] -> [[String]] -> [[String]]
 conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
 -- Apply wheres after conjoin
-applyWhere :: [[String]] -> [Where] -> [[String]]
+applyWhere :: [[String]] -> [WherePair] -> [[String]]
 applyWhere table wheres = [row | row <- table, rowBelongs row wheres]
 
-rowBelongs :: [String] -> [Where] -> Bool
+rowBelongs :: [String] -> [WherePair] -> Bool
 rowBelongs row [] = True
 rowBelongs row (w:wheres) = (row !! (fst w) == row !! (snd w)) && rowBelongs row wheres
 
@@ -70,7 +70,5 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
 main = do
  s <- readFile "text.txt" 
  let tokens = alexScanTokens s
- let result = parseCql tokens
- print result
-
-
+ let ast = parseCql tokens
+ print ast
