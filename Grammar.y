@@ -3,32 +3,41 @@ module Grammar where
 import Tokens
 }
 
-%name
+%name parseCql
 %tokentype { Token }
 %error { parseError }
+
 %token
   take    { TokenTake }
   from    { TokenFrom }
-  if      { TokenIf }
-  import  { TokenImport }
-  null    { TokenNull }
+  read    { TokenRead }
+  where   { TokenWhere }
   var     { TokenVar $$ }
-  '=='    { TokenEq }
-  '!='    { TokenNotEq }
+  file    { TokenFile $$ }
+  ','     { TokenComma }
+  '='     { TokenEq }
+  '^'     { TokenConjoin }
   '('     { TokenLParen }
   ')'     { TokenRParen }
-  '['     { TokenLSP }
-  ']'     { TokenRSP }
 
---do we need an int thing
+%%
 
-Vars:   var
-    |   var Vars
-    |                                       --the empty set
+Exp : take Vars from Files       {TakeFrom $2 $4}
 
-Exp :   take '[' Vars ']' from var '[' Vars ']' Exp  { Take $2 $4 $6 $7 }
-    |   from var '[' Vars ']' Exp            { From $2 $4 $6 }
-    |   if var '==' Exp             { If $2 $4 }
-    |   if var '!=' null            { If $2}
-    |   '(' Exp ')'                 { $2 }
-    |                                       --when Exp = nothing
+Vars : var ',' Vars   { $1 : $3 }
+     | var            { [$1] }
+
+Files : File '^' File  { Conjoin $1 $3 }
+      | File           { $1 }
+
+File : file '(' Vars ')'     {File $1 $3 }
+
+{
+parseError :: [Token] -> a
+parseError tokens = error "Parse error"
+
+data Exp = TakeFrom [String] File deriving Show
+data File = File String [String] | Conjoin File File deriving Show
+
+
+}
