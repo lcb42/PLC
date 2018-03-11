@@ -17,8 +17,10 @@ tokens :-
   READ                           { \s -> TokenRead }
   WHERE                          { \s -> TokenWhere }
   \,                             { \s -> TokenComma }
+  \;                             { \s -> TokenEnd }
   \^                             { \s -> TokenConjoin }
   \=                             { \s -> TokenEq }
+  \&                             { \s -> TokenAnd }
   \(                             { \s -> TokenLParen }
   \)                             { \s -> TokenRParen } 
   $alpha [$digit]*               { \s -> TokenVar s }
@@ -33,8 +35,10 @@ data Token =
   TokenRead       |
   TokenWhere      |
   TokenComma      |
+  TokenEnd        |
   TokenConjoin    |
   TokenEq         |
+  TokenAnd        |
   TokenLParen     |
   TokenRParen     |
   TokenVar String |
