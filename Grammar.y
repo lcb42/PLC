@@ -10,7 +10,6 @@ import Tokens
 %token
   take    { TokenTake }
   from    { TokenFrom }
-  read    { TokenRead }
   where   { TokenWhere }
   var     { TokenVar $$ }
   file    { TokenFile $$ }
@@ -26,6 +25,7 @@ import Tokens
 %%
 
 Exp : take Vars from Files where Wheres ';'   {TakeFromWhere $2 $4 $6}
+    | take Vars from Files ';'                {TakeFrom $2 $4 }
 
 Vars : var ',' Vars   { $1 : $3 }
      | var            { [$1] }
@@ -44,9 +44,8 @@ Where : var '=' var         { Eq ($1,$3) }
 parseError :: [Token] -> a
 parseError tokens = error "Parse error"
 
-data Exp = TakeFromWhere [String] File Where deriving Show
+data Exp = TakeFromWhere [String] File Where | TakeFrom [String] File deriving Show
 data File = File String [String] | Conjoin File File deriving Show
 data Where = Eq (String,String) | And Where Where deriving Show
-
 
 }
