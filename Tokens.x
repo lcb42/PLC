@@ -14,7 +14,6 @@ tokens :-
   $upper                         { \s -> TokenFile s }
   TAKE                           { \s -> TokenTake }
   FROM                           { \s -> TokenFrom }
-  READ                           { \s -> TokenRead }
   WHERE                          { \s -> TokenWhere }
   \,                             { \s -> TokenComma }
   \;                             { \s -> TokenEnd }
@@ -32,7 +31,6 @@ tokens :-
 data Token =
   TokenTake       |
   TokenFrom       |
-  TokenRead       |
   TokenWhere      |
   TokenComma      |
   TokenEnd        |
