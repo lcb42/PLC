@@ -4,7 +4,6 @@ import Grammar
 import Data.List
 
 type Order = Int
---type Where = [Int]
 type WherePair = (Int, Int)
 type VarMap = (String, Int)
 
@@ -88,6 +87,26 @@ getVars :: File -> [String]
 getVars (File name vars) = vars
 getVars (Conjoin file1 file2) = getVars file1 ++ getVars file2
 
+substituteExp :: Exp -> [VarMap] -> Exp
+substituteExp (TakeFromWhere x y z) assocs = TakeFromWhere (substituteStrings x assocs) (substituteFile y assocs) (substituteWheres z assocs)
+
+substituteFile :: File -> [VarMap] -> File
+substituteFile (File name vars) assocs = File name (substituteStrings vars assocs)
+substituteFile (Conjoin file1 file2) assocs = Conjoin (substituteFile file1 assocs) (substituteFile file2 assocs)
+
+substituteStrings :: [String] -> [VarMap] -> [String]
+substituteStrings strings assocs = [ show index | s <- strings, (name,index) <- assocs, s == name ]
+
+-- TODO: THROW AN ERROR
+substituteString :: String -> [VarMap] -> String
+substituteString string assocs = show $ head [ snd a | a <- assocs, fst a == string]
+
+substituteWheres :: Where -> [VarMap] -> Where
+substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
+
+--substituteString :: String -> [VarMap] -> String
+--substituteString string assocs = 
 
 -- Main
 --main = do
@@ -102,8 +121,9 @@ main = do
  progString <- readFile "program.txt" 
  let ast = parseCql $ alexScanTokens progString
  let assocs = getAssocs ast
- files <- readTables ast
+ let subbedAst = substituteExp ast assocs
+ conjoinedTable <- readTables subbedAst
  
- print files
+ print conjoinedTable
 
 
