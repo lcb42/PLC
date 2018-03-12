@@ -66,18 +66,18 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
                                                          string' -> w : splitCommaOnce string''
                                                           where (w, string'') = break (==',') string'
 
---eval :: Exp -> String
---eval (TakeFromWhere x y z) = readTable y
+readTables :: Exp -> IO [[String]]
+readTables (TakeFromWhere x y z) = readTable y
 
---readTable :: File -> [[[String]]]
+-- Read in all the csvs in the query and store each as a separate list
+--readTable :: File -> IO [[String]]
 readTable (File name vars) = do file <- readCsv (name ++ ".csv")
-                                return ([file])
-
-
+                                return (file)
 
 readTable (Conjoin file1 file2) = do file1 <- readTable file1
                                      file2 <- readTable file2
-                                     return (file1 ++ file2)
+                                     let conjoined = conjoin file1 file2
+                                     return (conjoined)
 
 -- Create a list of associations between variable names and column indexes
 getAssocs :: Exp -> [VarMap]
@@ -102,7 +102,8 @@ main = do
  progString <- readFile "program.txt" 
  let ast = parseCql $ alexScanTokens progString
  let assocs = getAssocs ast
+ files <- readTables ast
  
- print ast
+ print files
 
 
