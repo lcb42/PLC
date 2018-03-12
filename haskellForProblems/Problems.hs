@@ -44,6 +44,13 @@ mergeList (s:string) = s ++ "," ++ mergeList string
 selectFrom :: [Order] -> [[String]] -> [[String]] -> [[String]]
 selectFrom ord xs ys = sort (selectAll ord (conjoin xs ys))
 
+getFileNames :: Exp -> [(String,[String])]
+getFileNames (TakeFromWhere x y z) = retrieveFile y
+
+retrieveFile :: File -> [(String,[String])]
+retrieveFile (File name vars) = [(name,vars)]
+retrieveFile (Conjoin first second) = retrieveFile first ++ retrieveFile second
+
 readCsv :: String -> IO [[String]]
 readCsv file = do contents <- readFile file
                   let lineSep = lines contents
@@ -68,7 +75,10 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
 --       print $ formatOutput final
 
 main = do
- s <- readFile "text.txt" 
- let tokens = alexScanTokens s
- let ast = parseCql tokens
- print ast
+ progString <- readFile "program.txt" 
+ let ast = parseCql $ alexScanTokens progString
+ let assocs = getFileNames ast
+ 
+ print assocs
+
+
