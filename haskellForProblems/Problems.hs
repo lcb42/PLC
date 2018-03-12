@@ -130,4 +130,4 @@ main = do
  let wheres = createWherePairs subbedAst
  let wheresApplied = applyWhere conjoinedTable wheres
  let inOrder = selectAll (getOrder subbedAst) wheresApplied
- print inOrder
+ print (sort inOrder)
