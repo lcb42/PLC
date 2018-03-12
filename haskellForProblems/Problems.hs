@@ -6,6 +6,7 @@ import Data.List
 type Order = Int
 --type Where = [Int]
 type WherePair = (Int, Int)
+type VarMap = (String, Int)
 
 -- TODO:Convert from AST strings to items which can be passed into the below functions
 
@@ -65,6 +66,29 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
                                                          string' -> w : splitCommaOnce string''
                                                           where (w, string'') = break (==',') string'
 
+--eval :: Exp -> String
+--eval (TakeFromWhere x y z) = readTable y
+
+--readTable :: File -> [[[String]]]
+readTable (File name vars) = do file <- readCsv (name ++ ".csv")
+                                return ([file])
+
+
+
+readTable (Conjoin file1 file2) = do file1 <- readTable file1
+                                     file2 <- readTable file2
+                                     return (file1 ++ file2)
+
+-- Create a list of associations between variable names and column indexes
+getAssocs :: Exp -> [VarMap]
+getAssocs (TakeFromWhere x y z) = zip (getVars y) [0..]
+
+-- Retrieve all the variables in the tables
+getVars :: File -> [String]
+getVars (File name vars) = vars
+getVars (Conjoin file1 file2) = getVars file1 ++ getVars file2
+
+
 -- Main
 --main = do
 --       readFirst <- readCsv "5a3.csv"
@@ -77,8 +101,8 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
 main = do
  progString <- readFile "program.txt" 
  let ast = parseCql $ alexScanTokens progString
- let assocs = getFileNames ast
+ let assocs = getAssocs ast
  
- print assocs
+ print ast
 
 
