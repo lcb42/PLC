@@ -8,18 +8,18 @@ import Tokens
 %error { parseError }
 
 %token
-  take    { TokenTake }
-  from    { TokenFrom }
-  where   { TokenWhere }
-  var     { TokenVar $$ }
-  file    { TokenFile $$ }
-  ';'     { TokenEnd }
-  '&'     { TokenAnd }
-  ','     { TokenComma }
-  '='     { TokenEq }
-  '^'     { TokenConjoin }
-  '('     { TokenLParen }
-  ')'     { TokenRParen }
+  take    { TokenTake _ }
+  from    { TokenFrom _ }
+  where   { TokenWhere _ }
+  var     { TokenVar $$ _ }
+  file    { TokenFile $$ _ }
+  ';'     { TokenEnd _ }
+  '&'     { TokenAnd _ }
+  ','     { TokenComma _ }
+  '='     { TokenEq _ }
+  '^'     { TokenConjoin _ }
+  '('     { TokenLParen _ }
+  ')'     { TokenRParen _ }
 
 %left '^'
 %%
@@ -42,7 +42,12 @@ Where : var '=' var         { Eq ($1,$3) }
 
 {
 parseError :: [Token] -> a
-parseError tokens = error "Parse error"
+parseError tokens
+ | tokens == [] = error ("Parse error, missing ;")
+ | otherwise = error ("Parse error at " ++ errorMessage (tokenPosn (head tokens)))
+
+errorMessage :: AlexPosn -> String
+errorMessage (AlexPn x y z) = "Ln: " ++ show y ++ " Col: " ++ show z
 
 data Exp = TakeFromWhere [String] File Where | TakeFrom [String] File deriving Show
 data File = File String [String] | Conjoin File File deriving Show
