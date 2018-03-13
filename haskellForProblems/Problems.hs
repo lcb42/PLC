@@ -8,14 +8,16 @@ type Order = String
 type WherePair = (String, String)
 type VarMap = (String, Int)
 
--- Join two tables and apply 'wheres if there are any'
+-- Join two tables
 conjoin :: [[String]] -> [[String]] -> [[String]]
 conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
+-- Locate the 'where' clauses of the statement
 createWherePairs :: Exp -> [WherePair]
 createWherePairs (TakeFromWhere x y z) = getPairs z
 createWherePairs (TakeFrom x y) = []
 
+-- Create a list of all of the pairs of variables which should be equal, as per the 'where' clauses
 getPairs :: Where -> [WherePair]
 getPairs (Eq x) = [x]
 getPairs (And x y) = getPairs x ++ getPairs y
@@ -36,32 +38,12 @@ selectOne ord xs = [ xs !! (read o ::Int) | o <- ord]
 selectAll :: [Order] -> [[String]] -> [[String]]
 selectAll ord xs = [selectOne ord x | x <- xs ]
 
+-- Retrieve the desired order of variables from the 'take' clause
 getOrder :: Exp -> [Order]
 getOrder (TakeFromWhere x y z) = x
 getOrder (TakeFrom x y) = x
 
--- Take a list of lists and return each list as a string on a newline
-formatOutput :: [[String]] -> String
-formatOutput [] = []
-formatOutput (s:strings) = mergeList s ++ "\n" ++ formatOutput strings
-
-mergeList :: [String] -> String
-mergeList [] = []
-mergeList (s:[]) = s
-mergeList (s:string) = s ++ "," ++ mergeList string
-
--- Pass in a desired order and two lists of strings to be joined and ordered
-selectFrom :: [Order] -> [[String]] -> [[String]] -> [[String]]
-selectFrom ord xs ys = sort (selectAll ord (conjoin xs ys))
-
-getFileNames :: Exp -> [(String,[String])]
-getFileNames (TakeFromWhere x y z) = retrieveFile y
-getFileNames (TakeFrom x y) = retrieveFile y
-
-retrieveFile :: File -> [(String,[String])]
-retrieveFile (File name vars) = [(name,vars)]
-retrieveFile (Conjoin first second) = retrieveFile first ++ retrieveFile second
-
+-- Read in the csv, split by newline and comma
 readCsv :: String -> IO [[String]]
 readCsv file = do contents <- readFile file
                   let lineSep = lines contents
@@ -100,10 +82,10 @@ getVars :: File -> [String]
 getVars (File name vars) = vars
 getVars (Conjoin file1 file2) = getVars file1 ++ getVars file2
 
+-- Replace all instances of string variables with the index of the column they represent
 substituteExp :: Exp -> [VarMap] -> Exp
 substituteExp (TakeFromWhere x y z) assocs = TakeFromWhere (substituteStrings x assocs) (substituteFile y assocs) (substituteWheres z assocs)
 substituteExp (TakeFrom x y) assocs = TakeFrom (substituteStrings x assocs) (substituteFile y assocs)
-
 
 substituteFile :: File -> [VarMap] -> File
 substituteFile (File name vars) assocs = File name (substituteStrings vars assocs)
@@ -119,6 +101,16 @@ substituteString string assocs = show $ head [ snd a | a <- assocs, fst a == str
 substituteWheres :: Where -> [VarMap] -> Where
 substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
+
+-- Take a list of lists and return each list as a string on a newline
+formatOutput :: [[String]] -> String
+formatOutput [] = []
+formatOutput (s:strings) = mergeList s ++ "\n" ++ formatOutput strings
+
+mergeList :: [String] -> String
+mergeList [] = []
+mergeList (s:[]) = s
+mergeList (s:string) = s ++ "," ++ mergeList string
 
 main = do
  args <- getArgs
