@@ -2,6 +2,7 @@ module Main where
 import Tokens
 import Grammar
 import Data.List
+import System.Environment
 
 type Order = String
 type WherePair = (String, String)
@@ -42,7 +43,6 @@ getOrder (TakeFrom x y) = x
 -- Take a list of lists and return each list as a string on a newline
 formatOutput :: [[String]] -> String
 formatOutput [] = []
-formatOutput (s:[]) = mergeList s
 formatOutput (s:strings) = mergeList s ++ "\n" ++ formatOutput strings
 
 mergeList :: [String] -> String
@@ -120,9 +120,9 @@ substituteWheres :: Where -> [VarMap] -> Where
 substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
 
-
 main = do
- progString <- readFile "program.txt"
+ args <- getArgs
+ progString <- readFile (head args)
  let ast = parseCql $ alexScanTokens progString
  let assocs = getAssocs ast
  let subbedAst = substituteExp ast assocs
@@ -130,4 +130,4 @@ main = do
  let wheres = createWherePairs subbedAst
  let wheresApplied = applyWhere conjoinedTable wheres
  let inOrder = selectAll (getOrder subbedAst) wheresApplied
- print (sort inOrder)
+ putStr (formatOutput (sort inOrder))
