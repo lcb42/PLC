@@ -8,13 +8,15 @@ import Tokens
 %error { parseError }
 
 %token
-  take    { TokenTake _ }
+  fetch   { TokenFetch _ }
   from    { TokenFrom _ }
   where   { TokenWhere _ }
   var     { TokenVar $$ _ }
   '"'     { TokenQuote _ }
   '!='    { TokenNotEq _ }
+  '>='    { TokenGtEq _ }
   '>'     { TokenGt _ }
+  '<='    { TokenLtEq _ }
   '<'     { TokenLt _ }
   ';'     { TokenEnd _ }
   '&'     { TokenAnd _ }
@@ -24,11 +26,10 @@ import Tokens
   '('     { TokenLParen _ }
   ')'     { TokenRParen _ }
 
-%left '^'
 %%
 
-Exp : take Vars from Files where Wheres ';'   {TakeFromWhere $2 $4 $6}
-    | take Vars from Files ';'                {TakeFrom $2 $4 }
+Exp : fetch Vars from Files where Wheres ';'   {TakeFromWhere $2 $4 $6}
+    | fetch Vars from Files ';'                {TakeFrom $2 $4 }
 
 Vars : var ',' Vars   { $1 : $3 }
      | var            { [$1] }
@@ -44,10 +45,14 @@ Wheres : Wheres '&' Where   { And $1 $3 }
 Where : var '=' var           { Eq ($1,$3) }
        | var '!=' var         { NotEq ($1,$3) }
        | var '>' var          { Gt ($1,$3) }
+       | var '>=' var         { GtEq ($1,$3) }
        | var '<' var          { Lt ($1,$3) }
+       | var '<=' var         { LtEq ($1,$3) }
        | var '=' '"' var '"'  { EqLit ($1,$4) }
        | var '>' '"' var '"'  { GtLit ($1,$4) }
+       | var '>=' '"' var '"' { GtEqLit ($1,$4) }
        | var '<' '"' var '"'  { LtLit ($1,$4) }
+       | var '<=' '"' var '"' { LtEqLit ($1,$4) }
        | var '!=' '"' var '"' { NotEqLit ($1,$4) }
 
 {
@@ -62,6 +67,8 @@ errorMessage (AlexPn x y z) = "Ln: " ++ show y ++ " Col: " ++ show z
 data Exp = TakeFromWhere [String] File Where | TakeFrom [String] File deriving Show
 data File = File String [String] | Conjoin File File deriving Show
 data Where = Gt (String,String) | Lt (String,String) | NotEq (String,String) | Eq (String,String) 
- | And Where Where | EqLit (String,String) | GtLit (String,String) | LtLit (String,String) | NotEqLit (String,String) deriving Show
+ | And Where Where | EqLit (String,String) | GtLit (String,String) | LtLit (String,String) 
+ | NotEqLit (String,String) | GtEq (String,String) | LtEq (String,String) 
+ | GtEqLit (String,String) | LtEqLit (String,String) deriving Show
 
 }
