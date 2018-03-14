@@ -12,43 +12,24 @@ type VarMap = (String, Int)
 conjoin :: [[String]] -> [[String]] -> [[String]]
 conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
--- Locate the 'where' clauses of the statement
-createWherePairs :: Exp -> [WherePair]
-createWherePairs (TakeFromWhere x y z)
- | getUnassignedWheres (getWhereValues z) (getVars y) [] /= [] = error (printList (getUnassignedWheres (getWhereValues z) (getVars y) [] ) ++ "not in scope")
- | otherwise = getPairs z
-createWherePairs (TakeFrom x y) = []
-
 printList :: [String] -> String
 printList [] = ""
 printList (x:xs) = x ++ " " ++ printList xs
 
-getUnassignedWheres :: [String] -> [String] -> [String] -> [String]
-getUnassignedWheres [] vars unassigned = unassigned
-getUnassignedWheres (w:wheres) vars unassigned
- | or [True | v <- vars, v==w] == False = getUnassignedWheres wheres vars (w:unassigned)
- | otherwise = getUnassignedWheres wheres vars unassigned
-
-getWhereValues :: Where -> [String]
-getWhereValues (Eq x) = [fst x] ++ [snd x]
-getWhereValues (And x y) = getWhereValues x ++ getWhereValues y
-
-ensurePairs :: [WherePair] -> [VarMap] -> Bool
-ensurePairs [] vars = True
-ensurePairs (p:pairs) vars = or [True | v <- vars, fst p == fst v] && or [True | v <- vars, snd p == fst v] && ensurePairs pairs vars
-
--- Create a list of all of the pairs of variables which should be equal, as per the 'where' clauses
-getPairs :: Where -> [WherePair]
-getPairs (Eq x) = [x]
-getPairs (And x y) = getPairs x ++ getPairs y
-
 -- Apply wheres after conjoin
-applyWhere :: [[String]] -> [WherePair] -> [[String]]
+applyWheres :: [[String]] -> Exp -> [[String]]
+applyWheres table (TakeFromWhere x y z) = applyWhere table z
+applyWheres table (TakeFrom x y) = table
+
+applyWhere :: [[String]] -> Where -> [[String]]
 applyWhere table wheres = [row | row <- table, rowBelongs row wheres]
 
-rowBelongs :: [String] -> [WherePair] -> Bool
-rowBelongs row [] = True
-rowBelongs row (w:wheres) = (row !! (read (fst w)) == row !! (read (snd w))) && rowBelongs row wheres
+rowBelongs :: [String] -> Where -> Bool
+rowBelongs row (Eq x) = (row !! (read (fst x))) == (row !! (read (snd x)))
+rowBelongs row (NotEq x) = (row !! (read (fst x))) /= (row !! (read (snd x)))
+rowBelongs row (Gt x) = (row !! (read (fst x))) > (row !! (read (snd x)))
+rowBelongs row (Lt x) = (row !! (read (fst x))) < (row !! (read (snd x)))
+rowBelongs row (And x y) = rowBelongs row x && rowBelongs row y
 
 -- Take one row, rearrange to desired order
 selectOne :: [Order] -> [String] -> [String]
@@ -134,11 +115,15 @@ substituteString string assocs
 
 substituteWheres :: Where -> [VarMap] -> Where
 substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (NotEq x) assocs = NotEq (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (Gt x) assocs = Gt (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (Lt x) assocs = Lt (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
 
 -- Take a list of lists and return each list as a string on a newline
 formatOutput :: [[String]] -> String
 formatOutput [] = []
+formatOutput (s:[]) = mergeList s
 formatOutput (s:strings) = mergeList s ++ "\n" ++ formatOutput strings
 
 mergeList :: [String] -> String
@@ -153,7 +138,7 @@ main = do
  let assocs = getAssocs ast
  let subbedAst = substituteExp ast assocs
  conjoinedTable <- readTables subbedAst
- let wheres = createWherePairs subbedAst
- let wheresApplied = applyWhere conjoinedTable wheres
+ let wheresApplied = applyWheres conjoinedTable subbedAst
  let inOrder = selectAll (getOrder subbedAst) wheresApplied
- putStr (formatOutput (sort inOrder))
+ print ast
+ putStrLn (formatOutput (sort inOrder))
