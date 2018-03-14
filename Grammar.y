@@ -12,7 +12,7 @@ import Tokens
   from    { TokenFrom _ }
   where   { TokenWhere _ }
   var     { TokenVar $$ _ }
-  file    { TokenFile $$ _ }
+  '"'     { TokenQuote _ }
   '!='    { TokenNotEq _ }
   '>'     { TokenGt _ }
   '<'     { TokenLt _ }
@@ -36,15 +36,19 @@ Vars : var ',' Vars   { $1 : $3 }
 Files : Files '^' File  { Conjoin $1 $3 }
       | File           { $1 }
 
-File : file '(' Vars ')'     { File $1 $3 }
+File : var '(' Vars ')'     { File $1 $3 }
 
 Wheres : Wheres '&' Where   { And $1 $3 }
        | Where              { $1 }
 
-Where : var '=' var         { Eq ($1,$3) }
-       | var '!=' var       { NotEq ($1,$3) }
-       | var '>' var        { Gt ($1,$3) }
-       | var '<' var        { Lt ($1,$3) }
+Where : var '=' var           { Eq ($1,$3) }
+       | var '!=' var         { NotEq ($1,$3) }
+       | var '>' var          { Gt ($1,$3) }
+       | var '<' var          { Lt ($1,$3) }
+       | var '=' '"' var '"'  { EqLit ($1,$4) }
+       | var '>' '"' var '"'  { GtLit ($1,$4) }
+       | var '<' '"' var '"'  { LtLit ($1,$4) }
+       | var '!=' '"' var '"' { NotEqLit ($1,$4) }
 
 {
 parseError :: [Token] -> a
@@ -57,6 +61,7 @@ errorMessage (AlexPn x y z) = "Ln: " ++ show y ++ " Col: " ++ show z
 
 data Exp = TakeFromWhere [String] File Where | TakeFrom [String] File deriving Show
 data File = File String [String] | Conjoin File File deriving Show
-data Where = Gt (String,String) | Lt (String,String) | NotEq (String,String) | Eq (String,String) | And Where Where deriving Show
+data Where = Gt (String,String) | Lt (String,String) | NotEq (String,String) | Eq (String,String) 
+ | And Where Where | EqLit (String,String) | GtLit (String,String) | LtLit (String,String) | NotEqLit (String,String) deriving Show
 
 }
