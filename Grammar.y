@@ -13,6 +13,9 @@ import Tokens
   where   { TokenWhere _ }
   var     { TokenVar $$ _ }
   file    { TokenFile $$ _ }
+  '!='    { TokenNotEq _ }
+  '>'     { TokenGt _ }
+  '<'     { TokenLt _ }
   ';'     { TokenEnd _ }
   '&'     { TokenAnd _ }
   ','     { TokenComma _ }
@@ -39,6 +42,9 @@ Wheres : Wheres '&' Where   { And $1 $3 }
        | Where              { $1 }
 
 Where : var '=' var         { Eq ($1,$3) }
+       | var '!=' var       { NotEq ($1,$3) }
+       | var '>' var        { Gt ($1,$3) }
+       | var '<' var        { Lt ($1,$3) }
 
 {
 parseError :: [Token] -> a
@@ -51,6 +57,6 @@ errorMessage (AlexPn x y z) = "Ln: " ++ show y ++ " Col: " ++ show z
 
 data Exp = TakeFromWhere [String] File Where | TakeFrom [String] File deriving Show
 data File = File String [String] | Conjoin File File deriving Show
-data Where = Eq (String,String) | And Where Where deriving Show
+data Where = Gt (String,String) | Lt (String,String) | NotEq (String,String) | Eq (String,String) | And Where Where deriving Show
 
 }
