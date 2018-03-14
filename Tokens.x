@@ -6,15 +6,14 @@ module Tokens where
 
 $digit = 0-9                --digits
 $alpha = [a-zA-Z]           --alphabetic characters
-$upper = [A-Z]              --filenames
 
 tokens :-
   $white+     ;
   "--".*      ;
-  $upper                         { \p s -> TokenFile s p }
   TAKE                           { \p s -> TokenTake p }
   FROM                           { \p s -> TokenFrom p }
   WHERE                          { \p s -> TokenWhere p }
+  \"                             { \p s -> TokenQuote p }
   \!\=                           { \p s -> TokenNotEq p}
   \>                             { \p s -> TokenGt p}
   \<                             { \p s -> TokenLt p}
@@ -25,7 +24,7 @@ tokens :-
   \&                             { \p s -> TokenAnd p }
   \(                             { \p s -> TokenLParen p }
   \)                             { \p s -> TokenRParen p } 
-  $alpha [$alpha $digit \_ \’]*  { \p s -> TokenVar s p }
+  [$alpha $digit \_ \’]+         { \p s -> TokenVar s p }
 
 {
 --Each action has type :: String -> Token
@@ -35,6 +34,7 @@ data Token =
   TokenTake AlexPosn        |
   TokenFrom AlexPosn        |
   TokenWhere AlexPosn       |
+  TokenQuote AlexPosn       |
   TokenNotEq AlexPosn       |
   TokenGt AlexPosn          |
   TokenLt AlexPosn          |
@@ -45,16 +45,15 @@ data Token =
   TokenAnd AlexPosn         |
   TokenLParen AlexPosn      |
   TokenRParen AlexPosn      |
-  TokenVar String AlexPosn  |
-  TokenFile String AlexPosn
+  TokenVar String AlexPosn  
   deriving (Eq, Show)
 
 
 tokenPosn :: Token -> AlexPosn
-tokenPosn (TokenFile s p) = p
 tokenPosn (TokenTake p) = p
 tokenPosn (TokenFrom p) = p
 tokenPosn (TokenWhere p) = p
+tokenPosn (TokenQuote p) = p
 tokenPosn (TokenNotEq p) = p
 tokenPosn (TokenGt p) = p
 tokenPosn (TokenLt p) = p
