@@ -12,6 +12,7 @@ import Tokens
   from    { TokenFrom _ }
   where   { TokenWhere _ }
   var     { TokenVar $$ _ }
+  all     { TokenAll _ }
   '"'     { TokenQuote _ }
   '!='    { TokenNotEq _ }
   '>='    { TokenGtEq _ }
@@ -30,6 +31,8 @@ import Tokens
 
 Exp : fetch Vars from Files where Wheres ';'   {TakeFromWhere $2 $4 $6}
     | fetch Vars from Files ';'                {TakeFrom $2 $4 }
+    | fetch all from Files where Wheres ';'    {TakeFromWhere ["ALL"] $4 $6}
+    | fetch all from Files ';'                 {TakeFrom ["ALL"] $4 }
 
 Vars : var ',' Vars   { $1 : $3 }
      | var            { [$1] }
