@@ -15,6 +15,9 @@ tokens :-
   TAKE                           { \p s -> TokenTake p }
   FROM                           { \p s -> TokenFrom p }
   WHERE                          { \p s -> TokenWhere p }
+  \!\=                           { \p s -> TokenNotEq p}
+  \>                             { \p s -> TokenGt p}
+  \<                             { \p s -> TokenLt p}
   \,                             { \p s -> TokenComma p }
   \;                             { \p s -> TokenEnd p }
   \^                             { \p s -> TokenConjoin p }
@@ -22,7 +25,7 @@ tokens :-
   \&                             { \p s -> TokenAnd p }
   \(                             { \p s -> TokenLParen p }
   \)                             { \p s -> TokenRParen p } 
-  $alpha [$digit]*               { \p s -> TokenVar s p }
+  $alpha [$alpha $digit \_ \’]*  { \p s -> TokenVar s p }
 
 {
 --Each action has type :: String -> Token
@@ -32,6 +35,9 @@ data Token =
   TokenTake AlexPosn        |
   TokenFrom AlexPosn        |
   TokenWhere AlexPosn       |
+  TokenNotEq AlexPosn       |
+  TokenGt AlexPosn          |
+  TokenLt AlexPosn          |
   TokenComma AlexPosn       |
   TokenEnd AlexPosn         |
   TokenConjoin AlexPosn     |
@@ -49,6 +55,9 @@ tokenPosn (TokenFile s p) = p
 tokenPosn (TokenTake p) = p
 tokenPosn (TokenFrom p) = p
 tokenPosn (TokenWhere p) = p
+tokenPosn (TokenNotEq p) = p
+tokenPosn (TokenGt p) = p
+tokenPosn (TokenLt p) = p
 tokenPosn (TokenComma p) = p
 tokenPosn (TokenEnd p) = p
 tokenPosn (TokenConjoin p) = p
