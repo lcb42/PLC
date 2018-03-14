@@ -5,7 +5,6 @@ import Data.List
 import System.Environment
 
 type Order = String
-type WherePair = (String, String)
 type VarMap = (String, Int)
 
 -- Join two tables
@@ -30,6 +29,10 @@ rowBelongs row (NotEq x) = (row !! (read (fst x))) /= (row !! (read (snd x)))
 rowBelongs row (Gt x) = (row !! (read (fst x))) > (row !! (read (snd x)))
 rowBelongs row (Lt x) = (row !! (read (fst x))) < (row !! (read (snd x)))
 rowBelongs row (And x y) = rowBelongs row x && rowBelongs row y
+rowBelongs row (EqLit x) = row !! (read (fst x)) == snd x
+rowBelongs row (GtLit x) = row !! (read (fst x)) > snd x
+rowBelongs row (LtLit x) = row !! (read (fst x)) < snd x
+rowBelongs row (NotEqLit x) = row !! (read (fst x)) /= snd x
 
 -- Take one row, rearrange to desired order
 selectOne :: [Order] -> [String] -> [String]
@@ -119,6 +122,10 @@ substituteWheres (NotEq x) assocs = NotEq (substituteString (fst x) assocs , sub
 substituteWheres (Gt x) assocs = Gt (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (Lt x) assocs = Lt (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
+substituteWheres (EqLit x) assocs = EqLit (substituteString (fst x) assocs, snd x)
+substituteWheres (GtLit x) assocs = GtLit (substituteString (fst x) assocs, snd x)
+substituteWheres (LtLit x) assocs = LtLit (substituteString (fst x) assocs, snd x)
+substituteWheres (NotEqLit x) assocs = NotEqLit (substituteString (fst x) assocs, snd x)
 
 -- Take a list of lists and return each list as a string on a newline
 formatOutput :: [[String]] -> String
