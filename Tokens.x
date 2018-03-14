@@ -13,12 +13,13 @@ tokens :-
   FETCH                          { \p s -> TokenFetch p }
   FROM                           { \p s -> TokenFrom p }
   WHERE                          { \p s -> TokenWhere p }
+  ALL                            { \p s -> TokenAll p }
   \"                             { \p s -> TokenQuote p }
   \!\=                           { \p s -> TokenNotEq p}
   \>                             { \p s -> TokenGt p}
-  \>\=                            { \p s -> TokenGtEq p}
+  \>\=                           { \p s -> TokenGtEq p}
   \<                             { \p s -> TokenLt p}
-  \<\=                            { \p s -> TokenLtEq p}
+  \<\=                           { \p s -> TokenLtEq p}
   \,                             { \p s -> TokenComma p }
   \;                             { \p s -> TokenEnd p }
   \^                             { \p s -> TokenConjoin p }
@@ -26,7 +27,7 @@ tokens :-
   \&                             { \p s -> TokenAnd p }
   \(                             { \p s -> TokenLParen p }
   \)                             { \p s -> TokenRParen p } 
-  [$alpha $digit \_ \' \-]+         { \p s -> TokenVar s p }
+  [$alpha $digit \_ \' \-]+      { \p s -> TokenVar s p }
 
 {
 --Each action has type :: String -> Token
@@ -36,6 +37,7 @@ data Token =
   TokenFetch AlexPosn       |
   TokenFrom AlexPosn        |
   TokenWhere AlexPosn       |
+  TokenAll AlexPosn         |
   TokenQuote AlexPosn       |
   TokenNotEq AlexPosn       |
   TokenGt AlexPosn          |
@@ -57,6 +59,7 @@ tokenPosn :: Token -> AlexPosn
 tokenPosn (TokenFetch p) = p
 tokenPosn (TokenFrom p) = p
 tokenPosn (TokenWhere p) = p
+tokenPosn (TokenAll p) = p
 tokenPosn (TokenQuote p) = p
 tokenPosn (TokenNotEq p) = p
 tokenPosn (TokenGt p) = p
