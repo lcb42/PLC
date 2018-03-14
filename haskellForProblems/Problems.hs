@@ -14,8 +14,28 @@ conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
 -- Locate the 'where' clauses of the statement
 createWherePairs :: Exp -> [WherePair]
-createWherePairs (TakeFromWhere x y z) = getPairs z
+createWherePairs (TakeFromWhere x y z)
+ | getUnassignedWheres (getWhereValues z) (getVars y) [] /= [] = error (printList (getUnassignedWheres (getWhereValues z) (getVars y) [] ) ++ "not in scope")
+ | otherwise = getPairs z
 createWherePairs (TakeFrom x y) = []
+
+printList :: [String] -> String
+printList [] = ""
+printList (x:xs) = x ++ " " ++ printList xs
+
+getUnassignedWheres :: [String] -> [String] -> [String] -> [String]
+getUnassignedWheres [] vars unassigned = unassigned
+getUnassignedWheres (w:wheres) vars unassigned
+ | or [True | v <- vars, v==w] == False = getUnassignedWheres wheres vars (w:unassigned)
+ | otherwise = getUnassignedWheres wheres vars unassigned
+
+getWhereValues :: Where -> [String]
+getWhereValues (Eq x) = [fst x] ++ [snd x]
+getWhereValues (And x y) = getWhereValues x ++ getWhereValues y
+
+ensurePairs :: [WherePair] -> [VarMap] -> Bool
+ensurePairs [] vars = True
+ensurePairs (p:pairs) vars = or [True | v <- vars, fst p == fst v] && or [True | v <- vars, snd p == fst v] && ensurePairs pairs vars
 
 -- Create a list of all of the pairs of variables which should be equal, as per the 'where' clauses
 getPairs :: Where -> [WherePair]
@@ -74,8 +94,19 @@ readTable (Conjoin file1 file2) = do file1 <- readTable file1
 
 -- Create a list of associations between variable names and column indexes
 getAssocs :: Exp -> [VarMap]
-getAssocs (TakeFromWhere x y z) = zip (getVars y) [0..]
-getAssocs (TakeFrom x y) = zip (getVars y) [0..]
+getAssocs (TakeFromWhere x y z)
+ | (getDuplicate (sort (getVars y))) /= [] = error (getDuplicate (sort (getVars y)) ++ " is used to name more than one variable.")
+ | otherwise = zip (getVars y) [0..]
+getAssocs (TakeFrom x y)
+ | (getDuplicate (sort (getVars y))) /= [] = error (getDuplicate (sort (getVars y)) ++ " is used to name more than one variable.")
+ | otherwise = zip (getVars y) [0..]
+
+getDuplicate :: [String] -> String
+getDuplicate [] = []
+getDuplicate (x:[]) = []
+getDuplicate (x:y:xs)
+ | x == y = x
+ | otherwise = getDuplicate (y:xs)
 
 -- Retrieve all the variables in the tables
 getVars :: File -> [String]
@@ -96,7 +127,10 @@ substituteStrings strings assocs = [ show index | s <- strings, (name,index) <- 
 
 -- TODO: THROW AN ERROR
 substituteString :: String -> [VarMap] -> String
-substituteString string assocs = show $ head [ snd a | a <- assocs, fst a == string]
+substituteString string assocs 
+ | getMatch string assocs == [] = error ("No such variable " ++ string)
+ | otherwise = show (head (getMatch string assocs))
+  where getMatch string assocs = [ snd a | a <- assocs, fst a == string]
 
 substituteWheres :: Where -> [VarMap] -> Where
 substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
