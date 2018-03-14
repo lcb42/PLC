@@ -42,6 +42,7 @@ selectOne ord xs = [ xs !! (read o ::Int) | o <- ord]
 
 -- Pass all rows and rearranged into desired order
 selectAll :: [Order] -> [[String]] -> [[String]]
+selectAll ["ALL"] xs = xs
 selectAll ord xs = [selectOne ord x | x <- xs ]
 
 -- Retrieve the desired order of variables from the 'take' clause
@@ -110,7 +111,11 @@ substituteFile (File name vars) assocs = File name (substituteStrings vars assoc
 substituteFile (Conjoin file1 file2) assocs = Conjoin (substituteFile file1 assocs) (substituteFile file2 assocs)
 
 substituteStrings :: [String] -> [VarMap] -> [String]
-substituteStrings strings assocs = [ show index | s <- strings, (name,index) <- assocs, s == name ]
+substituteStrings ["ALL"] assocs = ["ALL"]
+substituteStrings [] assocs = []
+substituteStrings (s:strings) assocs = case (getIndex s assocs) of [] -> error ("No such variable " ++ s)
+                                                                   _ -> getIndex s assocs ++ substituteStrings strings assocs
+ where getIndex s assocs = [show index | (name,index) <- assocs, s == name]
 
 substituteString :: String -> [VarMap] -> String
 substituteString string assocs 
@@ -149,7 +154,7 @@ getArguments :: IO [String]
 getArguments = do args <- getArgs
                   case args of [] -> error (".cql program file required to run query")
                                [x] -> return args
-                               _ -> error ("More than one program file")
+                               _ -> error ("More than one program file passed as argument")
 
 main = do
  args <- getArguments
