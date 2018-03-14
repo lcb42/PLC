@@ -11,34 +11,36 @@ type VarMap = (String, Int)
 conjoin :: [[String]] -> [[String]] -> [[String]]
 conjoin t1 t2 = [a ++ b | a <- t1, b <- t2]
 
-printList :: [String] -> String
-printList [] = ""
-printList (x:xs) = x ++ " " ++ printList xs
-
--- Apply wheres after conjoin
+-- Apply all where clauses to a table
 applyWheres :: [[String]] -> Exp -> [[String]]
 applyWheres table (TakeFromWhere x y z) = applyWhere table z
 applyWheres table (TakeFrom x y) = table
 
+-- Go through each row and test all where clauses, return if all apply
 applyWhere :: [[String]] -> Where -> [[String]]
 applyWhere table wheres = [row | row <- table, rowBelongs row wheres]
 
+-- Test whether a given row satisfies all the where clauses
 rowBelongs :: [String] -> Where -> Bool
 rowBelongs row (Eq x) = (row !! (read (fst x))) == (row !! (read (snd x)))
 rowBelongs row (NotEq x) = (row !! (read (fst x))) /= (row !! (read (snd x)))
 rowBelongs row (Gt x) = (row !! (read (fst x))) > (row !! (read (snd x)))
+rowBelongs row (GtEq x) = (row !! (read (fst x))) >= (row !! (read (snd x)))
 rowBelongs row (Lt x) = (row !! (read (fst x))) < (row !! (read (snd x)))
+rowBelongs row (LtEq x) = (row !! (read (fst x))) <= (row !! (read (snd x)))
 rowBelongs row (And x y) = rowBelongs row x && rowBelongs row y
 rowBelongs row (EqLit x) = row !! (read (fst x)) == snd x
 rowBelongs row (GtLit x) = row !! (read (fst x)) > snd x
 rowBelongs row (LtLit x) = row !! (read (fst x)) < snd x
 rowBelongs row (NotEqLit x) = row !! (read (fst x)) /= snd x
+rowBelongs row (GtEqLit x) = row !! (read (fst x)) >= snd x
+rowBelongs row (LtEqLit x) = row !! (read (fst x)) <= snd x
 
 -- Take one row, rearrange to desired order
 selectOne :: [Order] -> [String] -> [String]
 selectOne ord xs = [ xs !! (read o ::Int) | o <- ord]
 
--- Pass all rows into orderAll to be ordered
+-- Pass all rows and rearranged into desired order
 selectAll :: [Order] -> [[String]] -> [[String]]
 selectAll ord xs = [selectOne ord x | x <- xs ]
 
@@ -62,6 +64,7 @@ splitCommaOnce string = case dropWhile (==',') string of "" -> []
                                                          string' -> w : splitCommaOnce string''
                                                           where (w, string'') = break (==',') string'
 
+-- Read in the tables from the 'from' clause
 readTables :: Exp -> IO [[String]]
 readTables (TakeFromWhere x y z) = readTable y
 readTables (TakeFrom x y) = readTable y
@@ -109,23 +112,27 @@ substituteFile (Conjoin file1 file2) assocs = Conjoin (substituteFile file1 asso
 substituteStrings :: [String] -> [VarMap] -> [String]
 substituteStrings strings assocs = [ show index | s <- strings, (name,index) <- assocs, s == name ]
 
--- TODO: THROW AN ERROR
 substituteString :: String -> [VarMap] -> String
 substituteString string assocs 
  | getMatch string assocs == [] = error ("No such variable " ++ string)
  | otherwise = show (head (getMatch string assocs))
   where getMatch string assocs = [ snd a | a <- assocs, fst a == string]
 
+-- If column comparisons, replace variables with the column index. If literals, leave them as strings.
 substituteWheres :: Where -> [VarMap] -> Where
 substituteWheres (Eq x) assocs = Eq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (NotEq x) assocs = NotEq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (Gt x) assocs = Gt (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (GtEq x) assocs = GtEq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (Lt x) assocs = Lt (substituteString (fst x) assocs , substituteString (snd x) assocs)
+substituteWheres (LtEq x) assocs = LtEq (substituteString (fst x) assocs , substituteString (snd x) assocs)
 substituteWheres (And x y) assocs = And (substituteWheres x assocs) (substituteWheres y assocs)
 substituteWheres (EqLit x) assocs = EqLit (substituteString (fst x) assocs, snd x)
 substituteWheres (GtLit x) assocs = GtLit (substituteString (fst x) assocs, snd x)
 substituteWheres (LtLit x) assocs = LtLit (substituteString (fst x) assocs, snd x)
 substituteWheres (NotEqLit x) assocs = NotEqLit (substituteString (fst x) assocs, snd x)
+substituteWheres (GtEqLit x) assocs = GtEqLit (substituteString (fst x) assocs, snd x)
+substituteWheres (LtEqLit x) assocs = LtEqLit (substituteString (fst x) assocs, snd x)
 
 -- Take a list of lists and return each list as a string on a newline
 formatOutput :: [[String]] -> String
@@ -138,8 +145,14 @@ mergeList [] = []
 mergeList (s:[]) = s
 mergeList (s:string) = s ++ "," ++ mergeList string
 
+getArguments :: IO [String]
+getArguments = do args <- getArgs
+                  case args of [] -> error (".cql program file required to run query")
+                               [x] -> return args
+                               _ -> error ("More than one program file")
+
 main = do
- args <- getArgs
+ args <- getArguments
  progString <- readFile (head args)
  let ast = parseCql $ alexScanTokens progString
  let assocs = getAssocs ast
@@ -147,5 +160,4 @@ main = do
  conjoinedTable <- readTables subbedAst
  let wheresApplied = applyWheres conjoinedTable subbedAst
  let inOrder = selectAll (getOrder subbedAst) wheresApplied
- print ast
  putStrLn (formatOutput (sort inOrder))
