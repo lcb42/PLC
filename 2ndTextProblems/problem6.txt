@@ -1,0 +1,2 @@
+FETCH x1
+FROM R(x1) ^ S(x2);

@@ -1,0 +1,3 @@
+FETCH x1, x6
+FROM R(x1,x2) ^ R(x3,x4) ^ R(x5,x6)
+WHERE x2=x3 & x4=x5;
