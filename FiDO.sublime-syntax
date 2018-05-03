@@ -1,0 +1,41 @@
+%YAML 1.2
+---
+
+name: FiDO
+file_extensions: [cql]
+scope: source.cql
+
+contexts:
+ main:
+  - match: \b(FETCH|FROM|WHERE)\b
+    scope: keyword.control.cql
+
+  - match: (=)
+    scope: keyword.operator.cql
+    
+
+  - match: '--'
+    scope: punctuation.definition.comment.cql
+    push: line_comment
+
+    
+  - match: x([0-9])+
+    scope: variable.language.cql
+    pop: true
+
+  - match: '"'
+    scope: punctuation.definition.string.begin.example-c
+    push: double_quoted_string
+
+ line_comment:
+  - meta_scope: comment.line.example-c
+  - match: $
+    pop: true
+
+ double_quoted_string:
+  - meta_scope: string.quoted.double.example-c
+  - match: '\\.'
+    scope: constant.character.escape.example-c
+  - match: '"'
+    scope: punctuation.definition.string.end.example-c
+    pop: true
